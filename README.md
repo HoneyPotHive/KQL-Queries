@@ -6,6 +6,17 @@
 Working in KQL or Kusto Query Language My saved queries where I pull analytical data to do research on events.
 <br />
 <br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
 #### Current Folders
 -------------------
 ```python
