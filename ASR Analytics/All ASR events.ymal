@@ -1,0 +1,6 @@
+DeviceEvents
+| where ActionType startswith "Asr"
+// if you want more days increase value of 7d ex: 30d for last 30days
+| where Timestamp between(ago(7d) .. now())
+| summarize Blocked = count() by bin(Timestamp, 1d), File=ActionType
+| render columnchart

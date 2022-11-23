@@ -1,0 +1,30 @@
+
+let clk = pack_array('A potentially malicious URL click', 'Suspicious URL clicked');
+TABLE
+| project 
+    Title, Timestamp, AlertId, DetectionSource
+| where 
+    Title has_any (clk)
+| where 
+    Timestamp >= ago(1hr)
+    
+/// V2
+//////////////
+let clk = pack_array('A potentially malicious URL click', 'Suspicious URL clicked');
+AlertInfo
+| project AlertId, Title, Timestamp
+| where 
+    Title has_any(clk)
+| where 
+    Timestamp >= ago(24h) // h = hour d = days - Change scope of time frame of incident
+| join kind=inner 
+    (AlertEvidence | project DeviceId, AlertId, DeviceName) on AlertId
+| join kind=inner 
+    (DeviceEvents 
+        | project ReportId, DeviceId, AccountName, AccountSid, AccountDomain
+        | where isnotempty(AccountName)
+        | where AccountName != "system") on DeviceId
+| where 
+    isnotempty(DeviceId)
+| summarize 
+    arg_max(Timestamp, *) by DeviceName

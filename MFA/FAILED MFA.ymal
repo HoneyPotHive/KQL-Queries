@@ -1,0 +1,59 @@
+// Grabs count for failed MFA challenge and display them oer a timeline and fail count.
+// Grabs only out of US
+///////////////////////////
+
+/// Azure Advance Hunting
+///////////////////////////
+AADSignInEventsBeta
+| project
+    AadDeviceId,
+    AccountDisplayName,
+    ErrorCode,
+    Timestamp,
+    Country,
+    State,
+    DeviceName,
+    ReportId
+| where 
+    Timestamp >= ago(7d) //change time in ago to query further back
+| where 
+    Country != "US"
+| where 
+    isnotempty(Country)
+| where 
+    ErrorCode == "50074"
+/// data for detection rule
+///////////////////////////
+| summarize 
+    FailedMFA=count() by AccountDisplayName, ReportId, Timestamp, Country, DeviceName
+/// Generate columnchart for visual
+///////////////////////////
+//| summarize 
+//   FailedMFA=count() by AccountDisplayName, Country
+//| render
+ //   columnchart with(kind=unstacked)
+
+/// Azure Sentinel
+///////////////////////////
+SigninLogs
+| where ResultType == "50074"
+| project
+    UserDisplayName,
+    Identity,
+    UserPrincipalName,
+    ResultDescription,
+    AppDisplayName,
+    AppId,
+    ResourceDisplayName,
+    TimeGenerated,
+    Location
+| where TimeGenerated between (ago(1d) .. now()) //change time in ago to query further back
+| where Location != "US"
+| where isnotempty(Location)
+| summarize 
+    FailureCount=count(),
+    FailedResources=dcount(ResourceDisplayName),
+    ResultDescription=any(ResultDescription), Location=any(Location)
+    by Timeline=bin(TimeGenerated, 7d), UserDisplayName
+| render
+    barchart with(kind=unstacked)
